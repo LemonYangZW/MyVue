@@ -19,7 +19,7 @@
   <body>
     <div id="todo-app">
       <div>
-        <input type="button" value="全部标为完成" />
+        <input type="button" value="全部标为完成" @click="markAllAsCompleted" />
         <span v-if="hasRemovedTodo">
           <input type="button" value="撤销" @click="restoreTodo()" />
         </span>
@@ -34,7 +34,7 @@
       </div>
       <!-- todo list -->
       <ul>
-        <li v-for="todo in todos" :key="todo.id">
+        <li v-for="todo in filteredTodos" :key="todo.id">
           <input
             type="text"
             value="编辑 todo"
@@ -42,6 +42,7 @@
             v-model="todo.title"
             @keyup.enter="editDone(todo)"
             @keyup.esc="cancelEdit(todo)"
+            v-focus="true"
           />
           <span
             :class="{completed:todo.completed}"
@@ -67,12 +68,27 @@
       </ul>
       <!-- end todo list -->
       <div>
-        <span>剩余 3 项未完成 ---</span>
+        <span>剩余 {{leftTodosCount}} 项未完成 ---</span>
         <span
           >筛选：
-          <input type="button" class="selected" value="全部" />
-          <input type="button" value="进行中" />
-          <input type="button" value="已完成" />
+          <input
+            type="button"
+            @click="intention='all'"
+            :class="{selected:intention=='all'}"
+            value="全部"
+          />
+          <input
+            type="button"
+            @click="intention='undone'"
+            :class="{selected:intention=='undone'}"
+            value="进行中"
+          />
+          <input
+            type="button"
+            @click="intention='finished'"
+            :class="{selected:intention=='finished'}"
+            value="已完成"
+          />
           <input type="button" value="清除已完成" />
           <input type="button" value="清除全部" />
         </span>
@@ -92,6 +108,7 @@
           isDisplay: "",
           removedTodo: null,
           editedTodo: null,
+          intention: "all",
         };
       },
       methods: {
@@ -101,6 +118,7 @@
               id: id++,
               title: this.newTodoTitle,
               completed: false,
+              intention: "undone",
             });
             this.newTodoTitle = "";
             this.checkEmpty = false;
@@ -139,13 +157,38 @@
           todo.title = this.editedTodo.title;
           this.editedTodo = null;
         },
+        markAllAsCompleted: function () {
+          this.todos.map((todo) => (todo.completed = true));
+        },
       },
       computed: {
+        leftTodos: function () {
+          return this.todos.filter((todo) => !todo.completed);
+        },
         flag: function () {
           return !this.newTodoTitle.length && this.checkEmpty;
         },
         hasRemovedTodo: function () {
           return !!this.removedTodo;
+        },
+        leftTodosCount: function () {
+          return this.leftTodos.length;
+        },
+        filteredTodos: function () {
+          if (this.intention === "undone") {
+            return this.leftTodos;
+          } else if (this.intention === "finished") {
+            return this.todos.filter((todo) => todo.completed);
+          } else {
+            return this.todos;
+          }
+        },
+      },
+      directives: {
+        focus: {
+          inserted: function (el) {
+            el.focus();
+          },
         },
       },
     });
