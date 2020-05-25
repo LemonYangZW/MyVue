@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vue Todo</title>
+    <style>
+      .completed {
+        text-decoration: line-through;
+      }
+
+      .selected {
+        color: red;
+      }
+      .empty {
+        border-color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="todo-app">
+      <div>
+        <input type="button" value="全部标为完成" />
+        <span v-if="hasRemovedTodo">
+          <input type="button" value="撤销" @click="restoreTodo()" />
+        </span>
+        <input
+          type="text"
+          v-model="newTodoTitle"
+          placeholder="添加 todo"
+          @keyup.enter="addTodo"
+          :class="{empty:flag}"
+        />
+        <span v-if="flag">请输入TODO</span>
+      </div>
+      <!-- todo list -->
+      <ul>
+        <li v-for="todo in todos" :key="todo.id">
+          <input
+            type="text"
+            value="编辑 todo"
+            v-if="editedTodo!==null && editedTodo.id===todo.id"
+            v-model="todo.title"
+            @keyup.enter="editDone(todo)"
+            @keyup.esc="cancelEdit(todo)"
+          />
+          <span
+            :class="{completed:todo.completed}"
+            @dblclick="editTodo(todo)"
+            v-else
+            >{{todo.title}}</span
+          >
+          <input
+            type="button"
+            value="标为完成"
+            @click="markAsCompleted(todo)"
+            v-if="!todo.completed"
+          />
+          <input
+            type="button"
+            value="标为未完成"
+            @click="markAsNoCompleted(todo)"
+            v-else
+          />
+
+          <input type="button" value="删除todo" @click="removeTodo(todo)" />
+        </li>
+      </ul>
+      <!-- end todo list -->
+      <div>
+        <span>剩余 3 项未完成 ---</span>
+        <span
+          >筛选：
+          <input type="button" class="selected" value="全部" />
+          <input type="button" value="进行中" />
+          <input type="button" value="已完成" />
+          <input type="button" value="清除已完成" />
+          <input type="button" value="清除全部" />
+        </span>
+      </div>
+    </div>
+  </body>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script>
+    let id = 0;
+    var app = new Vue({
+      el: "#todo-app",
+      data: function () {
+        return {
+          todos: [],
+          newTodoTitle: "",
+          checkEmpty: false,
+          isDisplay: "",
+          removedTodo: null,
+          editedTodo: null,
+        };
+      },
+      methods: {
+        addTodo: function () {
+          if (this.newTodoTitle.length) {
+            this.todos.push({
+              id: id++,
+              title: this.newTodoTitle,
+              completed: false,
+            });
+            this.newTodoTitle = "";
+            this.checkEmpty = false;
+          } else {
+            this.checkEmpty = true;
+          }
+        },
+        markAsCompleted: function (todo) {
+          todo.completed = true;
+        },
+        markAsNoCompleted: function (todo) {
+          todo.completed = false;
+        },
+        removeTodo: function (todo) {
+          //   if (confirm("确定删除吗?"))
+          //   this.todos.splice(this.todos.indexOf(todo), 1);
+          let pos = this.todos.indexOf(todo);
+          this.removedTodo = {
+            pos: pos,
+            todo: this.todos.splice(pos, 1)[0],
+          };
+        },
+        restoreTodo: function () {
+          let pos = this.removedTodo.pos;
+          let restored = this.removedTodo.todo;
+          this.todos.splice(pos, 0, restored);
+          this.removedTodo = null;
+        },
+        editTodo: function (todo) {
+          this.editedTodo = { id: todo.id, title: todo.title };
+        },
+        editDone: function (todo) {
+          this.editedTodo = null;
+        },
+        cancelEdit: function (todo) {
+          todo.title = this.editedTodo.title;
+          this.editedTodo = null;
+        },
+      },
+      computed: {
+        flag: function () {
+          return !this.newTodoTitle.length && this.checkEmpty;
+        },
+        hasRemovedTodo: function () {
+          return !!this.removedTodo;
+        },
+      },
+    });
+  </script>
+</html>
